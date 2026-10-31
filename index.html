@@ -11,6 +11,21 @@
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
     .hide-scrollbar::-webkit-scrollbar { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* Printable Thermal Invoice Styling */
+    @media print {
+      body * { visibility: hidden !important; }
+      #printable-receipt-modal, #printable-receipt-modal * { visibility: visible !important; }
+      #printable-receipt-modal {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        padding: 0 !important;
+        background: white !important;
+      }
+      .no-print { display: none !important; }
+    }
   </style>
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased min-h-screen flex flex-col">
@@ -19,7 +34,7 @@
   <div class="bg-emerald-900 text-emerald-100 px-4 py-2 text-xs md:text-sm font-medium flex justify-between items-center tracking-wide">
     <div class="flex items-center gap-2 overflow-hidden whitespace-nowrap">
       <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-      <span id="announcement-text">Free delivery on orders within 5 km · Phool Bagh, Chandrayangutta</span>
+      <span id="announcement-text">Free delivery on orders within 5 km · Chandrayangutta, Hyderabad</span>
     </div>
     <div class="flex items-center gap-4 text-xs">
       <button onclick="openAdminLoginModal()" class="text-emerald-300 hover:text-white underline font-semibold flex items-center gap-1">
@@ -97,33 +112,6 @@
     <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 mb-10">
       <!-- Product cards injected by JavaScript -->
     </div>
-
-    <!-- Bottom Features & Er Rewards Banner -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-8">
-      <!-- Er Rewards Card -->
-      <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-5 text-white flex items-center justify-between shadow-sm">
-        <div>
-          <span class="px-2 py-0.5 bg-white/20 rounded text-[10px] font-bold uppercase tracking-wider">Er Rewards</span>
-          <h3 class="text-lg font-bold mt-1">Earn 15 Points on every ₹100</h3>
-          <p class="text-xs text-amber-100 mt-0.5">Every order gives you reward points redeemable for discounts on future groceries.</p>
-        </div>
-        <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-2xl font-black">
-          Er
-        </div>
-      </div>
-
-      <!-- WhatsApp Helpdesk Card -->
-      <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-5 flex items-center justify-between">
-        <div>
-          <span class="px-2 py-0.5 bg-emerald-200 text-emerald-800 rounded text-[10px] font-bold uppercase tracking-wider">Direct Support</span>
-          <h3 class="text-base font-bold text-emerald-950 mt-1">Can't find an item?</h3>
-          <p class="text-xs text-emerald-700 mt-0.5">Send us your custom grocery list directly on WhatsApp.</p>
-        </div>
-        <a id="whatsapp-direct-btn" href="https://wa.me/919963596898" target="_blank" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm">
-          <i class="fa-brands fa-whatsapp text-sm"></i> Chat Now
-        </a>
-      </div>
-    </div>
   </main>
 
   <!-- ==================== ADMIN CONSOLE ==================== -->
@@ -134,7 +122,7 @@
           <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded text-xs font-bold">Admin Portal</span>
           <h2 class="text-xl font-extrabold text-gray-900" id="admin-store-title">Munwar Merchant Management</h2>
         </div>
-        <p class="text-xs text-gray-500 mt-0.5">Manage weightage variants, photo captures, delivery rules, and coupons</p>
+        <p class="text-xs text-gray-500 mt-0.5">Manage weightage variants, orders, printed receipts, and delivery fees</p>
       </div>
       <div class="flex items-center gap-2">
         <button onclick="switchView('store')" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-semibold flex items-center gap-1">
@@ -148,14 +136,30 @@
 
     <!-- Admin Tabs -->
     <div class="flex items-center gap-2 border-b border-gray-200 pb-3 mb-6 overflow-x-auto text-xs font-semibold">
-      <button onclick="switchAdminTab('products')" id="tab-btn-products" class="admin-tab active px-3.5 py-2 rounded-lg bg-emerald-600 text-white">Products & Weights</button>
+      <button onclick="switchAdminTab('orders')" id="tab-btn-orders" class="admin-tab active px-3.5 py-2 rounded-lg bg-emerald-600 text-white">Live Orders & Billing</button>
+      <button onclick="switchAdminTab('products')" id="tab-btn-products" class="admin-tab px-3.5 py-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200">Products & Weights</button>
       <button onclick="switchAdminTab('coupons')" id="tab-btn-coupons" class="admin-tab px-3.5 py-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200">Coupons & Offers</button>
-      <button onclick="switchAdminTab('orders')" id="tab-btn-orders" class="admin-tab px-3.5 py-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200">Live Orders</button>
       <button onclick="switchAdminTab('settings')" id="tab-btn-settings" class="admin-tab px-3.5 py-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200">Store Config & Delivery Rules</button>
     </div>
 
-    <!-- TAB 1: Products & Variants -->
-    <section id="admin-tab-products" class="space-y-6">
+    <!-- TAB 1: Live Orders & Billing Receipt Generation -->
+    <section id="admin-tab-orders" class="space-y-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-base font-bold text-gray-800">Customer Orders & Invoices</h3>
+          <p class="text-xs text-gray-500">View orders and click Print / Generate Bill for thermal slips or PDF download</p>
+        </div>
+        <button onclick="createCounterOrderModal()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm">
+          <i class="fa-solid fa-receipt"></i> Quick Store Bill
+        </button>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm" id="admin-orders-container">
+        <!-- Orders list injected by JS -->
+      </div>
+    </section>
+
+    <!-- TAB 2: Products & Variants -->
+    <section id="admin-tab-products" class="hidden space-y-6">
       <div class="flex items-center justify-between">
         <h3 class="text-base font-bold text-gray-800">Inventory Items (<span id="admin-product-count">0</span>)</h3>
         <button onclick="openProductModal()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm">
@@ -184,7 +188,7 @@
       </div>
     </section>
 
-    <!-- TAB 2: Coupons -->
+    <!-- TAB 3: Coupons -->
     <section id="admin-tab-coupons" class="hidden space-y-6">
       <div class="flex items-center justify-between">
         <h3 class="text-base font-bold text-gray-800">Discount Coupons</h3>
@@ -192,26 +196,13 @@
           <i class="fa-solid fa-plus"></i> Create Coupon
         </button>
       </div>
-
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="admin-coupons-list">
         <!-- Coupons injected by JS -->
       </div>
     </section>
 
-    <!-- TAB 3: Live Orders -->
-    <section id="admin-tab-orders" class="hidden space-y-6">
-      <div class="flex items-center justify-between">
-        <h3 class="text-base font-bold text-gray-800">Recent Customer Orders</h3>
-        <span class="text-xs text-gray-500">Auto-records web & WhatsApp checkouts</span>
-      </div>
-      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm" id="admin-orders-container">
-        <!-- Orders list injected by JS -->
-      </div>
-    </section>
-
     <!-- TAB 4: Store Config, Delivery Charges & Security -->
     <section id="admin-tab-settings" class="hidden space-y-6 max-w-3xl">
-      <!-- KM Delivery Charges Matrix -->
       <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm space-y-4">
         <div class="flex items-center justify-between border-b border-gray-100 pb-3">
           <div>
@@ -230,31 +221,26 @@
               <input type="number" id="setting-free-km" min="0" step="0.5" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-1 focus:ring-emerald-500 font-semibold text-gray-800">
               <span class="absolute right-3 top-2 text-gray-400 font-medium">KM</span>
             </div>
-            <p class="text-[10px] text-gray-400 mt-1">Orders within this distance get ₹0 delivery fee.</p>
           </div>
-
           <div>
             <label class="block font-semibold text-gray-700 mb-1">Charge Beyond Free KM (₹/KM)</label>
             <div class="relative">
               <span class="absolute left-3 top-2 text-gray-400 font-medium">₹</span>
               <input type="number" id="setting-extra-km-rate" min="0" step="1" class="w-full pl-7 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-1 focus:ring-emerald-500 font-semibold text-gray-800">
             </div>
-            <p class="text-[10px] text-gray-400 mt-1">Fee charged per extra KM beyond free radius.</p>
           </div>
-
           <div>
             <label class="block font-semibold text-gray-700 mb-1">Free Delivery Min Order (₹)</label>
             <div class="relative">
               <span class="absolute left-3 top-2 text-gray-400 font-medium">₹</span>
               <input type="number" id="setting-free-delivery-min" min="0" step="10" class="w-full pl-7 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-1 focus:ring-emerald-500 font-semibold text-gray-800">
             </div>
-            <p class="text-[10px] text-gray-400 mt-1">Orders above this amount get FREE delivery always.</p>
           </div>
         </div>
 
         <div class="pt-2 flex items-center justify-between border-t border-gray-100">
           <p class="text-[11px] text-emerald-700 font-medium" id="delivery-rule-preview">
-            Current Rule: Free up to 5 KM, then ₹10/KM. Always free on ₹499+.
+            Current Rule: Free up to 5 KM, then ₹10/KM.
           </p>
           <button onclick="saveDeliverySettings()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold text-xs shadow-sm">
             Save Delivery Rules
@@ -262,42 +248,24 @@
         </div>
       </div>
 
-      <!-- Business & Contact Details -->
+      <!-- Business Settings -->
       <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm space-y-4">
-        <h3 class="text-sm font-bold text-gray-900 border-b border-gray-100 pb-2">Business & Contact Settings</h3>
+        <h3 class="text-sm font-bold text-gray-900 border-b border-gray-100 pb-2">Business & Bill Header Settings</h3>
         <div class="space-y-3 text-xs">
           <div>
             <label class="block font-semibold text-gray-700 mb-1">Store / Business Name</label>
-            <input type="text" id="setting-store-name" oninput="previewStoreName(this.value)" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-1 focus:ring-emerald-500">
+            <input type="text" id="setting-store-name" oninput="previewStoreName(this.value)" class="w-full px-3 py-2 border border-gray-200 rounded-lg">
           </div>
           <div>
             <label class="block font-semibold text-gray-700 mb-1">Store Area / Locality</label>
-            <input type="text" id="setting-locality" oninput="previewStoreLocality(this.value)" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-1 focus:ring-emerald-500">
+            <input type="text" id="setting-locality" oninput="previewStoreLocality(this.value)" class="w-full px-3 py-2 border border-gray-200 rounded-lg">
           </div>
           <div>
-            <label class="block font-semibold text-gray-700 mb-1">WhatsApp & Call Mobile Number (10 digits)</label>
-            <input type="text" id="setting-phone" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-1 focus:ring-emerald-500">
+            <label class="block font-semibold text-gray-700 mb-1">WhatsApp & Call Mobile Number</label>
+            <input type="text" id="setting-phone" class="w-full px-3 py-2 border border-gray-200 rounded-lg">
           </div>
           <button onclick="saveStoreSettings()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold text-xs shadow-sm">
             Save Business Details
-          </button>
-        </div>
-      </div>
-
-      <!-- Password Update Section -->
-      <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm space-y-4">
-        <h3 class="text-sm font-bold text-gray-900 border-b border-gray-100 pb-2">Admin Security</h3>
-        <div class="space-y-3 text-xs">
-          <div>
-            <label class="block font-semibold text-gray-700 mb-1">Current Password</label>
-            <input type="password" id="setting-current-pwd" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-1 focus:ring-emerald-500">
-          </div>
-          <div>
-            <label class="block font-semibold text-gray-700 mb-1">New Password</label>
-            <input type="password" id="setting-new-pwd" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-1 focus:ring-emerald-500">
-          </div>
-          <button onclick="changeAdminPassword()" class="px-4 py-2 bg-gray-800 hover:bg-gray-900 text-white rounded-lg font-semibold text-xs shadow-sm">
-            Update Password
           </button>
         </div>
       </div>
@@ -331,7 +299,7 @@
       </div>
       <div id="coupon-message" class="text-[11px] hidden"></div>
 
-      <!-- Distance Selection for Delivery Fee Calculation -->
+      <!-- Distance Selection -->
       <div class="bg-white p-2.5 rounded-xl border border-gray-200 text-xs space-y-1.5">
         <div class="flex items-center justify-between">
           <label class="font-semibold text-gray-700 flex items-center gap-1.5">
@@ -340,11 +308,6 @@
           <span class="font-bold text-emerald-700" id="customer-distance-display">2.0 KM</span>
         </div>
         <input type="range" id="customer-distance-slider" min="0.5" max="15" step="0.5" value="2.0" oninput="updateCustomerDistance(this.value)" class="w-full accent-emerald-600 cursor-pointer">
-        <div class="flex justify-between text-[10px] text-gray-400">
-          <span>Nearby (0.5 km)</span>
-          <span id="slider-free-indicator" class="text-emerald-600 font-semibold">Free Zone (0 - 5 km)</span>
-          <span>15 km</span>
-        </div>
       </div>
 
       <!-- Bill Breakdown -->
@@ -373,10 +336,10 @@
         <input type="text" id="customer-address" placeholder="Delivery Address / House / Landmark" class="w-full px-3 py-1.5 border border-gray-200 rounded-lg">
       </div>
 
-      <!-- Dual Order Buttons -->
+      <!-- Order & Bill Generation Buttons -->
       <div class="grid grid-cols-2 gap-2 pt-1">
-        <button onclick="checkoutCart('instant')" class="w-full py-2.5 bg-gray-800 hover:bg-gray-900 text-white rounded-xl text-xs font-bold shadow-sm">
-          Place Order
+        <button onclick="checkoutCart('instant')" class="w-full py-2.5 bg-gray-900 hover:bg-black text-white rounded-xl text-xs font-bold shadow-sm flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-receipt"></i> Order & Bill
         </button>
         <button onclick="checkoutCart('whatsapp')" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm">
           <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp
@@ -385,7 +348,108 @@
     </div>
   </aside>
 
-  <!-- ==================== MODALS ==================== -->
+  <!-- ==================== PRINTABLE BILL / INVOICE MODAL ==================== -->
+  <div id="printable-receipt-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl relative border border-gray-200">
+      
+      <!-- Top Action Buttons (Hidden when printing) -->
+      <div class="flex items-center justify-between pb-3 mb-3 border-b border-gray-200 no-print">
+        <div class="flex items-center gap-1.5 text-xs font-bold text-gray-700">
+          <i class="fa-solid fa-receipt text-emerald-600"></i> Store Tax Invoice
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="window.print()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm">
+            <i class="fa-solid fa-print"></i> Print / PDF
+          </button>
+          <button onclick="closeReceiptModal()" class="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 text-xs">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Printable Slip Area (Standard 80mm / 3-inch Thermal Bill Layout) -->
+      <div id="printable-bill-area" class="text-gray-900 text-xs font-mono leading-tight space-y-3">
+        <!-- Store Info Header -->
+        <div class="text-center pb-2 border-b border-dashed border-gray-300">
+          <h2 class="text-base font-extrabold uppercase tracking-wider" id="bill-store-title">Munwar Merchant</h2>
+          <p class="text-[11px] text-gray-600" id="bill-store-loc">Phool Bagh, Chandrayangutta, Hyderabad</p>
+          <p class="text-[11px] text-gray-600">Phone: <span id="bill-store-tel">+91 99635 96898</span></p>
+          <p class="text-[10px] text-gray-400 mt-1">*** CASH / DELIVERY MEMO ***</p>
+        </div>
+
+        <!-- Meta Details -->
+        <div class="flex justify-between text-[11px] pb-1 border-b border-dashed border-gray-300">
+          <div>
+            <p><b>Bill No:</b> <span id="bill-order-id">ORD-123456</span></p>
+            <p><b>Customer:</b> <span id="bill-cust-name">Walk-in</span></p>
+            <p><b>Address:</b> <span id="bill-cust-addr">Counter</span></p>
+          </div>
+          <div class="text-right">
+            <p><b>Date:</b> <span id="bill-order-date">31/10/2026</span></p>
+            <p><b>Time:</b> <span id="bill-order-time">12:00 PM</span></p>
+            <p><b>Mode:</b> <span id="bill-order-mode">COD</span></p>
+          </div>
+        </div>
+
+        <!-- Items Table -->
+        <div class="pt-1">
+          <table class="w-full text-left text-[11px]">
+            <thead>
+              <tr class="border-b border-dashed border-gray-400 font-bold">
+                <th class="py-1">Item (Unit)</th>
+                <th class="py-1 text-center">Qty</th>
+                <th class="py-1 text-right">Price</th>
+                <th class="py-1 text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody id="bill-items-rows" class="divide-y divide-dotted divide-gray-200">
+              <!-- Item rows injected here -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Bill Totals -->
+        <div class="border-t border-dashed border-gray-400 pt-2 space-y-1 text-[11px]">
+          <div class="flex justify-between">
+            <span>Items Subtotal:</span>
+            <span id="bill-items-subtotal">₹0.00</span>
+          </div>
+          <div class="flex justify-between text-emerald-700" id="bill-discount-line">
+            <span>Discount:</span>
+            <span id="bill-items-discount">-₹0.00</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Delivery Charge:</span>
+            <span id="bill-items-delivery">₹0.00</span>
+          </div>
+          <div class="flex justify-between text-sm font-extrabold border-t border-b border-dashed border-gray-400 py-1.5">
+            <span>NET PAYABLE:</span>
+            <span id="bill-items-net">₹0.00</span>
+          </div>
+        </div>
+
+        <!-- Footer Note & Barcode -->
+        <div class="text-center pt-2 space-y-1">
+          <p class="text-[10px] text-gray-500">Thank you for shopping with Munwar Merchant!</p>
+          <p class="text-[9px] text-gray-400">Goods once sold can be returned within 24 hrs for fresh loose items.</p>
+          <div class="font-mono text-center tracking-widest text-[9px] text-gray-400 pt-1">
+            ||| | ||||| |||| || |||||| |||||
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Button at Bottom -->
+      <div class="mt-4 pt-3 border-t border-gray-100 flex gap-2 no-print">
+        <button onclick="shareBillOnWhatsApp()" class="w-1/2 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5">
+          <i class="fa-brands fa-whatsapp"></i> Send Bill
+        </button>
+        <button onclick="window.print()" class="w-1/2 py-2 bg-gray-900 hover:bg-black text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-print"></i> Print Slip
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Admin Login Modal -->
   <div id="modal-admin-login" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl relative">
@@ -393,7 +457,7 @@
       <p class="text-xs text-gray-500 mb-4">Enter password to manage Munwar Merchant</p>
       
       <div class="space-y-3">
-        <input type="password" id="admin-login-pwd" onkeyup="if(event.key==='Enter')verifyAdminPassword()" placeholder="Enter Password" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+        <input type="password" id="admin-login-pwd" onkeyup="if(event.key==='Enter')verifyAdminPassword()" placeholder="Enter Password" class="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none">
         <p id="admin-login-error" class="text-xs text-red-600 hidden font-medium">Incorrect password. Please try again.</p>
         <div class="flex gap-2 pt-2">
           <button onclick="closeAdminLoginModal()" class="w-1/2 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-semibold">Cancel</button>
@@ -403,7 +467,7 @@
     </div>
   </div>
 
-  <!-- Add/Edit Product Modal with Direct Camera Click & File Upload -->
+  <!-- Product Modal (with Camera Snap) -->
   <div id="modal-product" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
     <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-xl relative my-8">
       <div class="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
@@ -430,115 +494,50 @@
           </div>
         </div>
 
-        <!-- Image Options: Camera Click & File Upload -->
+        <!-- Camera & Photo Controls -->
         <div class="bg-gray-50 border border-gray-200 rounded-xl p-3.5 space-y-3">
-          <label class="block font-semibold text-gray-800">Product Photo (Camera Click, Gallery, or Link)</label>
+          <label class="block font-semibold text-gray-800">Product Photo</label>
           <div class="flex flex-col sm:flex-row items-center gap-3">
-            <!-- Preview Box -->
-            <div id="image-preview-box" class="w-24 h-24 rounded-xl bg-white border border-gray-200 flex items-center justify-center overflow-hidden shrink-0 text-gray-300 shadow-xs relative">
-              <i class="fa-solid fa-image text-3xl text-gray-300" id="image-placeholder-icon"></i>
+            <div id="image-preview-box" class="w-20 h-20 rounded-xl bg-white border border-gray-200 flex items-center justify-center overflow-hidden shrink-0 text-gray-300 shadow-xs relative">
+              <i class="fa-solid fa-image text-2xl text-gray-300" id="image-placeholder-icon"></i>
               <img id="image-preview-tag" src="" class="w-full h-full object-cover hidden" alt="Product preview">
             </div>
 
-            <!-- Upload & Camera Controls -->
             <div class="flex-grow w-full space-y-2">
               <div class="flex flex-wrap items-center gap-2">
-                <!-- 📸 Direct Camera Snap Button (Launches Camera directly on Phone) -->
-                <label class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-600 text-white hover:bg-emerald-700 rounded-lg font-bold text-xs shadow-xs transition-colors">
+                <label class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-600 text-white hover:bg-emerald-700 rounded-lg font-bold text-xs shadow-xs">
                   <i class="fa-solid fa-camera"></i> Take Photo
                   <input type="file" id="prod-image-camera" accept="image/*" capture="environment" onchange="handleImageFileUpload(event)" class="hidden">
                 </label>
-
-                <!-- 📁 Choose from Gallery / Computer Button -->
-                <label class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg font-semibold text-xs shadow-xs transition-colors">
-                  <i class="fa-solid fa-images text-emerald-600"></i> Browse Gallery
+                <label class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg font-semibold text-xs shadow-xs">
+                  <i class="fa-solid fa-images text-emerald-600"></i> Browse
                   <input type="file" id="prod-image-file" accept="image/*" onchange="handleImageFileUpload(event)" class="hidden">
                 </label>
-
-                <button type="button" id="remove-img-btn" onclick="clearProductImage()" class="hidden text-red-500 hover:text-red-700 text-xs font-semibold px-2 py-1">
-                  <i class="fa-solid fa-trash text-[10px]"></i> Remove
-                </button>
+                <button type="button" id="remove-img-btn" onclick="clearProductImage()" class="hidden text-red-500 hover:text-red-700 text-xs font-semibold px-2">Remove</button>
               </div>
-
-              <!-- Web URL Input as alternative -->
-              <div class="relative pt-1">
-                <span class="text-[10px] text-gray-400 block mb-0.5">Or paste direct Image Web URL:</span>
-                <input type="text" id="prod-image" oninput="handleImageUrlInput(this.value)" placeholder="https://example.com/image.jpg" class="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white text-xs">
-              </div>
+              <input type="text" id="prod-image" placeholder="Or paste direct image URL" class="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white text-xs">
             </div>
           </div>
         </div>
 
-        <!-- Variants & Weights Builder -->
+        <!-- Variants -->
         <div>
           <div class="flex items-center justify-between mb-2">
-            <label class="font-semibold text-gray-700">Weights / Units & Pricing</label>
+            <label class="font-semibold text-gray-700">Weights & Pricing</label>
             <button type="button" onclick="addVariantRow()" class="text-emerald-700 hover:text-emerald-800 font-bold text-[11px]">+ Add Another Weight</button>
           </div>
-          <div id="variants-container" class="space-y-2 max-h-48 overflow-y-auto p-2 bg-gray-50 rounded-xl border border-gray-100">
-            <!-- Dynamic Variant Rows -->
-          </div>
-          <p class="text-[11px] text-gray-400 mt-1">Example: 50g @ ₹15, 100g @ ₹28, 500g @ ₹140, 1kg @ ₹270, 1 pc @ ₹10, 1 L @ ₹68</p>
+          <div id="variants-container" class="space-y-2 max-h-48 overflow-y-auto p-2 bg-gray-50 rounded-xl border border-gray-100"></div>
         </div>
 
         <div class="flex items-center gap-2 pt-2">
-          <input type="checkbox" id="prod-instock" checked class="rounded text-emerald-600 focus:ring-emerald-500">
+          <input type="checkbox" id="prod-instock" checked class="rounded text-emerald-600">
           <label for="prod-instock" class="font-semibold text-gray-700">In Stock for Ordering</label>
         </div>
 
         <div class="flex justify-end gap-2 pt-3 border-t border-gray-100">
-          <button onclick="closeProductModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold">Cancel</button>
-          <button onclick="saveProduct()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold">Save Product</button>
+          <button onclick="closeProductModal()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-semibold">Cancel</button>
+          <button onclick="saveProduct()" class="px-4 py-2 bg-emerald-600 text-white rounded-xl font-bold">Save Product</button>
         </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Coupon Creation Modal -->
-  <div id="modal-coupon" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl relative">
-      <h3 class="text-base font-bold text-gray-900 mb-3">Create Discount Coupon</h3>
-      <div class="space-y-3 text-xs">
-        <div>
-          <label class="block font-semibold text-gray-700 mb-1">Coupon Code</label>
-          <input type="text" id="coupon-code" placeholder="e.g. WELCOME50 or RAMADAN100" class="w-full px-3 py-2 border border-gray-200 rounded-lg uppercase">
-        </div>
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block font-semibold text-gray-700 mb-1">Discount Type</label>
-            <select id="coupon-type" class="w-full px-3 py-2 border border-gray-200 rounded-lg">
-              <option value="flat">Flat ₹ Off</option>
-              <option value="percent">% Off</option>
-            </select>
-          </div>
-          <div>
-            <label class="block font-semibold text-gray-700 mb-1">Value</label>
-            <input type="number" id="coupon-val" placeholder="50" class="w-full px-3 py-2 border border-gray-200 rounded-lg">
-          </div>
-        </div>
-        <div>
-          <label class="block font-semibold text-gray-700 mb-1">Minimum Order Amount (₹)</label>
-          <input type="number" id="coupon-min" placeholder="499" class="w-full px-3 py-2 border border-gray-200 rounded-lg">
-        </div>
-        <div class="flex justify-end gap-2 pt-2">
-          <button onclick="closeCouponModal()" class="px-3.5 py-1.5 bg-gray-100 text-gray-700 rounded-xl font-semibold">Cancel</button>
-          <button onclick="saveCoupon()" class="px-4 py-2 bg-emerald-600 text-white rounded-xl font-bold">Save Coupon</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Custom Delete Confirmation Modal -->
-  <div id="modal-delete" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-xs w-full p-5 text-center shadow-xl">
-      <div class="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-3 text-lg">
-        <i class="fa-solid fa-trash"></i>
-      </div>
-      <h4 class="font-bold text-gray-900 text-sm mb-1">Delete Item?</h4>
-      <p class="text-xs text-gray-500 mb-4" id="delete-prompt-text">Are you sure you want to remove this item?</p>
-      <div class="flex gap-2">
-        <button onclick="closeDeleteModal()" class="w-1/2 py-2 bg-gray-100 text-gray-700 rounded-xl text-xs font-semibold">Cancel</button>
-        <button id="confirm-delete-btn" class="w-1/2 py-2 bg-red-600 text-white rounded-xl text-xs font-bold">Delete</button>
       </div>
     </div>
   </div>
@@ -632,49 +631,39 @@
       }
     ];
 
-    const INITIAL_COUPONS = [
-      { code: "WELCOME50", type: "flat", val: 50, min: 499 },
-      { code: "MUNWAR10", type: "percent", val: 10, min: 299 }
-    ];
-
     let products = JSON.parse(localStorage.getItem('mm_products')) || INITIAL_PRODUCTS;
-    let coupons = JSON.parse(localStorage.getItem('mm_coupons')) || INITIAL_COUPONS;
+    let coupons = JSON.parse(localStorage.getItem('mm_coupons')) || [{ code: "WELCOME50", type: "flat", val: 50, min: 499 }];
     let orders = JSON.parse(localStorage.getItem('mm_orders')) || [];
     let storeConfig = JSON.parse(localStorage.getItem('mm_config')) || DEFAULT_STORE_CONFIG;
-    
-    if (storeConfig.freeKm === undefined) storeConfig.freeKm = DEFAULT_STORE_CONFIG.freeKm;
-    if (storeConfig.extraKmRate === undefined) storeConfig.extraKmRate = DEFAULT_STORE_CONFIG.extraKmRate;
-    if (storeConfig.freeDeliveryMinOrder === undefined) storeConfig.freeDeliveryMinOrder = DEFAULT_STORE_CONFIG.freeDeliveryMinOrder;
 
     let cart = [];
     let appliedCoupon = null;
     let selectedCategory = 'All';
     let searchQuery = '';
     let selectedVariants = {};
-    let itemToDelete = null;
     let currentCustomerDistance = 2.0;
+    let activeReceiptOrder = null;
 
     function initApp() {
       applyStoreBranding();
       renderCatalog();
       renderAdminProducts();
-      renderAdminCoupons();
       renderAdminOrders();
       populateSettingsForm();
     }
 
     function applyStoreBranding() {
-      document.title = `${storeConfig.name} — Local Groceries`;
+      document.title = `${storeConfig.name} — Fresh Local Groceries`;
       document.getElementById('header-store-name').innerText = storeConfig.name;
       document.getElementById('header-locality').innerText = storeConfig.locality;
       document.getElementById('header-phone-display').innerText = `+91 ${storeConfig.phone}`;
       document.getElementById('header-phone-link').href = `tel:${storeConfig.phone}`;
-      document.getElementById('whatsapp-direct-btn').href = `https://wa.me/91${storeConfig.phone}`;
       document.getElementById('admin-store-title').innerText = `${storeConfig.name} Management`;
-
+      document.getElementById('bill-store-title').innerText = storeConfig.name;
+      document.getElementById('bill-store-loc').innerText = storeConfig.locality;
+      document.getElementById('bill-store-tel').innerText = `+91 ${storeConfig.phone}`;
       document.getElementById('announcement-text').innerText = `Free delivery on orders within ${storeConfig.freeKm} km · ${storeConfig.locality}`;
       document.getElementById('hero-free-delivery-badge').innerText = `Free delivery within ${storeConfig.freeKm} km (₹${storeConfig.freeDeliveryMinOrder}+ always free)`;
-      document.getElementById('slider-free-indicator').innerText = `Free Zone (0 - ${storeConfig.freeKm} km)`;
 
       const initials = storeConfig.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase() || 'MM';
       document.getElementById('header-logo').innerText = initials;
@@ -795,12 +784,8 @@
     }
 
     function calculateDeliveryFee(subtotal, distanceKm) {
-      if (storeConfig.freeDeliveryMinOrder && subtotal >= storeConfig.freeDeliveryMinOrder) {
-        return 0;
-      }
-      if (distanceKm <= storeConfig.freeKm) {
-        return 0;
-      }
+      if (storeConfig.freeDeliveryMinOrder && subtotal >= storeConfig.freeDeliveryMinOrder) return 0;
+      if (distanceKm <= storeConfig.freeKm) return 0;
       const extraKm = distanceKm - storeConfig.freeKm;
       return Math.round(extraKm * storeConfig.extraKmRate);
     }
@@ -845,10 +830,6 @@
       if (appliedCoupon) {
         if (subtotal >= appliedCoupon.min) {
           discount = appliedCoupon.type === 'flat' ? appliedCoupon.val : (subtotal * appliedCoupon.val) / 100;
-        } else {
-          appliedCoupon = null;
-          document.getElementById('coupon-message').innerText = `Coupon removed (min ₹${appliedCoupon ? appliedCoupon.min : ''} required)`;
-          document.getElementById('coupon-message').className = "text-[11px] text-amber-600";
         }
       }
 
@@ -890,35 +871,32 @@
         msg.innerText = "Invalid coupon code.";
         return;
       }
-      const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-      if (subtotal < found.min) {
-        msg.className = "text-[11px] text-amber-600";
-        msg.innerText = `Add ₹${(found.min - subtotal).toFixed(0)} more to unlock this coupon!`;
-        return;
-      }
       appliedCoupon = found;
       msg.className = "text-[11px] text-emerald-600 font-semibold";
-      msg.innerText = `Coupon '${found.code}' applied successfully!`;
+      msg.innerText = `Coupon '${found.code}' applied!`;
       updateCartUI();
     }
 
+    // Checkout & Instant Bill Generation
     function checkoutCart(method) {
       if (cart.length === 0) {
         alert("Your cart is empty!");
         return;
       }
-      const name = document.getElementById('customer-name').value.trim() || "Local Customer";
-      const address = document.getElementById('customer-address').value.trim() || storeConfig.locality;
+      const name = document.getElementById('customer-name').value.trim() || "Store Customer";
+      const address = document.getElementById('customer-address').value.trim() || `${storeConfig.locality} (~${currentCustomerDistance} KM)`;
       const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
       const discount = appliedCoupon ? (appliedCoupon.type === 'flat' ? appliedCoupon.val : (subtotal * appliedCoupon.val) / 100) : 0;
       const deliveryFee = calculateDeliveryFee(subtotal, currentCustomerDistance);
       const total = Math.max(0, subtotal - discount + deliveryFee);
 
+      const now = new Date();
       const orderObj = {
-        id: "ORD-" + Math.floor(100000 + Math.random() * 900000),
-        date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        id: "MM-" + Math.floor(100000 + Math.random() * 900000),
+        date: now.toLocaleDateString('en-IN'),
+        time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         customer: name,
-        address: `${address} (~${currentCustomerDistance} KM)`,
+        address: address,
         items: [...cart],
         subtotal: subtotal,
         discount: discount,
@@ -933,37 +911,155 @@
       renderAdminOrders();
 
       if (method === 'whatsapp') {
-        let msg = `🛒 *New Order from ${storeConfig.name}*\n`;
-        msg += `Order ID: #${orderObj.id}\n`;
+        let msg = `🛒 *Invoice from ${storeConfig.name}*\n`;
+        msg += `Bill No: #${orderObj.id}\n`;
+        msg += `Date: ${orderObj.date} ${orderObj.time}\n`;
         msg += `Customer: ${name}\n`;
-        msg += `Delivery Address: ${address} (~${currentCustomerDistance} KM)\n\n`;
+        msg += `Address: ${address}\n\n`;
         msg += `*Items:*\n`;
         cart.forEach((it, i) => {
           msg += `${i + 1}. ${it.name} (${it.variantLabel}) x ${it.qty} = ₹${(it.price * it.qty).toFixed(1)}\n`;
         });
         msg += `\nSubtotal: ₹${subtotal.toFixed(1)}`;
-        if (discount > 0) msg += `\nCoupon Discount: -₹${discount.toFixed(1)}`;
-        msg += `\nDelivery Fee: ${deliveryFee === 0 ? 'FREE' : '₹' + deliveryFee} (${currentCustomerDistance} km)`;
-        msg += `\n*Total Payable: ₹${total.toFixed(1)}*\n\n`;
-        msg += `Please confirm my order & delivery timing!`;
+        if (discount > 0) msg += `\nDiscount: -₹${discount.toFixed(1)}`;
+        msg += `\nDelivery Fee: ${deliveryFee === 0 ? 'FREE' : '₹' + deliveryFee}`;
+        msg += `\n*TOTAL PAYABLE: ₹${total.toFixed(1)}*\n\n`;
+        msg += `Thank you for your order!`;
 
         const waUrl = `https://wa.me/91${storeConfig.phone}?text=${encodeURIComponent(msg)}`;
         window.open(waUrl, '_blank');
-      } else {
-        alert(`Order #${orderObj.id} received successfully! Total: ₹${total.toFixed(1)} (Delivery: ${deliveryFee === 0 ? 'FREE' : '₹' + deliveryFee})`);
       }
 
+      // Automatically pop up the Printable Tax Invoice
+      displayInvoiceSlip(orderObj);
+
+      // Clean cart
       cart = [];
       appliedCoupon = null;
       document.getElementById('customer-name').value = '';
       document.getElementById('customer-address').value = '';
-      document.getElementById('cart-coupon-input').value = '';
-      document.getElementById('coupon-message').classList.add('hidden');
       updateCartUI();
       toggleCartDrawer(false);
     }
 
-    // ==================== ADMIN LOGIC ====================
+    // ==================== BILL GENERATION LOGIC ====================
+    function displayInvoiceSlip(order) {
+      activeReceiptOrder = order;
+      document.getElementById('bill-store-title').innerText = storeConfig.name;
+      document.getElementById('bill-store-loc').innerText = storeConfig.locality;
+      document.getElementById('bill-store-tel').innerText = `+91 ${storeConfig.phone}`;
+
+      document.getElementById('bill-order-id').innerText = order.id;
+      document.getElementById('bill-cust-name').innerText = order.customer;
+      document.getElementById('bill-cust-addr').innerText = order.address;
+      document.getElementById('bill-order-date').innerText = order.date;
+      document.getElementById('bill-order-time').innerText = order.time;
+      document.getElementById('bill-order-mode').innerText = "Cash on Delivery";
+
+      const tbody = document.getElementById('bill-items-rows');
+      tbody.innerHTML = '';
+      order.items.forEach(it => {
+        const tr = document.createElement('tr');
+        tr.className = "py-1";
+        const itemLineTotal = (it.price * it.qty).toFixed(1);
+        tr.innerHTML = `
+          <td class="py-1">
+            <div class="font-bold">${it.name}</div>
+            <div class="text-[10px] text-gray-500">${it.variantLabel}</div>
+          </td>
+          <td class="py-1 text-center font-bold">${it.qty}</td>
+          <td class="py-1 text-right">₹${it.price}</td>
+          <td class="py-1 text-right font-bold">₹${itemLineTotal}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('bill-items-subtotal').innerText = `₹${order.subtotal.toFixed(1)}`;
+      document.getElementById('bill-items-discount').innerText = `-₹${order.discount.toFixed(1)}`;
+      document.getElementById('bill-items-delivery').innerText = order.deliveryFee === 0 ? 'FREE' : `₹${order.deliveryFee}`;
+      document.getElementById('bill-items-net').innerText = `₹${order.total.toFixed(1)}`;
+
+      document.getElementById('printable-receipt-modal').classList.remove('hidden');
+    }
+
+    function closeReceiptModal() {
+      document.getElementById('printable-receipt-modal').classList.add('hidden');
+      activeReceiptOrder = null;
+    }
+
+    function shareBillOnWhatsApp() {
+      if (!activeReceiptOrder) return;
+      const o = activeReceiptOrder;
+      let msg = `🧾 *RECEIPT / INVOICE — ${storeConfig.name}*\n`;
+      msg += `Invoice No: ${o.id}\n`;
+      msg += `Date: ${o.date} ${o.time}\n`;
+      msg += `Customer: ${o.customer}\n\n`;
+      msg += `*Items Ordered:*\n`;
+      o.items.forEach((it, idx) => {
+        msg += `${idx + 1}. ${it.name} (${it.variantLabel}) x ${it.qty} = ₹${(it.price * it.qty).toFixed(1)}\n`;
+      });
+      msg += `\nSubtotal: ₹${o.subtotal.toFixed(1)}`;
+      if (o.discount > 0) msg += `\nDiscount: -₹${o.discount.toFixed(1)}`;
+      msg += `\nDelivery Fee: ${o.deliveryFee === 0 ? 'FREE' : '₹' + o.deliveryFee}`;
+      msg += `\n*TOTAL PAID/DUE: ₹${o.total.toFixed(1)}*\n\n`;
+      msg += `Thank you for shopping at ${storeConfig.name}!`;
+
+      const waUrl = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+      window.open(waUrl, '_blank');
+    }
+
+    function createCounterOrderModal() {
+      if (cart.length === 0) {
+        alert("Please add items to cart first to generate an instant store bill!");
+        switchView('store');
+        return;
+      }
+      checkoutCart('instant');
+    }
+
+    // ==================== ADMIN ORDERS TABLE ====================
+    function renderAdminOrders() {
+      const container = document.getElementById('admin-orders-container');
+      if (orders.length === 0) {
+        container.innerHTML = `<div class="p-8 text-center text-xs text-gray-400">No orders placed yet.</div>`;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="divide-y divide-gray-100">
+          ${orders.map((o, idx) => `
+            <div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs hover:bg-gray-50/60 transition-colors">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-gray-900">${o.id}</span>
+                  <span class="text-gray-400 font-medium">${o.date} ${o.time || ''}</span>
+                  <span class="px-2 py-0.5 bg-emerald-50 text-emerald-800 font-bold rounded text-[10px]">${o.status}</span>
+                </div>
+                <p class="text-gray-700 font-medium mt-1">Customer: ${o.customer} · <span class="text-gray-500">${o.address}</span></p>
+                <p class="text-gray-500 text-[11px] mt-0.5">${o.items.map(i => `${i.name} (${i.variantLabel}) x${i.qty}`).join(', ')}</p>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="text-right">
+                  <span class="font-extrabold text-sm text-gray-900">₹${o.total.toFixed(1)}</span>
+                  <p class="text-[10px] text-gray-400">${o.items.length} items · Del: ${o.deliveryFee ? '₹' + o.deliveryFee : 'FREE'}</p>
+                </div>
+                <!-- Generate Bill / Print Button for each order -->
+                <button onclick="viewOrderInvoice(${idx})" class="px-3 py-1.5 bg-gray-900 hover:bg-black text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm">
+                  <i class="fa-solid fa-receipt text-[11px]"></i> Generate Bill
+                </button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function viewOrderInvoice(orderIdx) {
+      const order = orders[orderIdx];
+      if (order) displayInvoiceSlip(order);
+    }
+
+    // Admin Tabs & Settings Logic
     function openAdminLoginModal() {
       document.getElementById('admin-login-pwd').value = '';
       document.getElementById('admin-login-error').classList.add('hidden');
@@ -1000,7 +1096,7 @@
         b.className = "admin-tab px-3.5 py-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200";
       });
       document.getElementById(`tab-btn-${tab}`).className = "admin-tab active px-3.5 py-2 rounded-lg bg-emerald-600 text-white";
-      ['products', 'coupons', 'orders', 'settings'].forEach(t => {
+      ['orders', 'products', 'coupons', 'settings'].forEach(t => {
         document.getElementById(`admin-tab-${t}`).classList.add('hidden');
       });
       document.getElementById(`admin-tab-${tab}`).classList.remove('hidden');
@@ -1045,20 +1141,14 @@
     // Image Upload & Camera Snap Handling
     function handleImageFileUpload(e) {
       const file = e.target.files[0];
-      if (!file) return;
+      if (!file || !file.type.startsWith('image/')) return;
 
-      if (!file.type.startsWith('image/')) {
-        alert('Please choose or take an image file.');
-        return;
-      }
-
-      // Resize image down to maintain quick localStorage load speeds
       const reader = new FileReader();
       reader.onload = function(evt) {
         const rawImg = new Image();
         rawImg.onload = function() {
           const canvas = document.createElement('canvas');
-          const maxDim = 600; // max 600px width/height for fast mobile performance
+          const maxDim = 600;
           let width = rawImg.width;
           let height = rawImg.height;
 
@@ -1079,9 +1169,11 @@
           const ctx = canvas.getContext('2d');
           ctx.drawImage(rawImg, 0, 0, width, height);
 
-          // Get optimized base64
           const optimizedData = canvas.toDataURL('image/jpeg', 0.85);
-          setImagePreview(optimizedData);
+          document.getElementById('image-preview-tag').src = optimizedData;
+          document.getElementById('image-preview-tag').classList.remove('hidden');
+          document.getElementById('image-placeholder-icon').classList.add('hidden');
+          document.getElementById('remove-img-btn').classList.remove('hidden');
           document.getElementById('prod-image').value = optimizedData;
         };
         rawImg.src = evt.target.result;
@@ -1089,33 +1181,8 @@
       reader.readAsDataURL(file);
     }
 
-    function handleImageUrlInput(url) {
-      if (url.trim()) {
-        setImagePreview(url.trim());
-      } else {
-        clearProductImage();
-      }
-    }
-
-    function setImagePreview(src) {
-      const imgTag = document.getElementById('image-preview-tag');
-      const placeholder = document.getElementById('image-placeholder-icon');
-      const removeBtn = document.getElementById('remove-img-btn');
-
-      if (src) {
-        imgTag.src = src;
-        imgTag.classList.remove('hidden');
-        placeholder.classList.add('hidden');
-        removeBtn.classList.remove('hidden');
-      } else {
-        clearProductImage();
-      }
-    }
-
     function clearProductImage() {
       document.getElementById('prod-image').value = '';
-      if (document.getElementById('prod-image-file')) document.getElementById('prod-image-file').value = '';
-      if (document.getElementById('prod-image-camera')) document.getElementById('prod-image-camera').value = '';
       document.getElementById('image-preview-tag').src = '';
       document.getElementById('image-preview-tag').classList.add('hidden');
       document.getElementById('image-placeholder-icon').classList.remove('hidden');
@@ -1137,17 +1204,14 @@
       container.appendChild(row);
     }
 
-    function openProductModal(isEdit = false) {
+    function openProductModal() {
       document.getElementById('modal-product').classList.remove('hidden');
-      if (!isEdit) {
-        document.getElementById('modal-product-title').innerText = "Add New Product";
-        document.getElementById('prod-form-id').value = '';
-        document.getElementById('prod-name').value = '';
-        clearProductImage();
-        document.getElementById('variants-container').innerHTML = '';
-        addVariantRow('500 g', '', '');
-        addVariantRow('1 kg', '', '');
-      }
+      document.getElementById('prod-form-id').value = '';
+      document.getElementById('prod-name').value = '';
+      clearProductImage();
+      document.getElementById('variants-container').innerHTML = '';
+      addVariantRow('500 g', '', '');
+      addVariantRow('1 kg', '', '');
     }
 
     function closeProductModal() {
@@ -1157,23 +1221,22 @@
     function editProduct(id) {
       const p = products.find(x => x.id === id);
       if (!p) return;
-      openProductModal(true);
+      openProductModal();
       document.getElementById('modal-product-title').innerText = "Edit Product & Weights";
       document.getElementById('prod-form-id').value = p.id;
       document.getElementById('prod-name').value = p.name;
       document.getElementById('prod-category').value = p.category;
       document.getElementById('prod-image').value = p.image || '';
       if (p.image) {
-        setImagePreview(p.image);
-      } else {
-        clearProductImage();
+        document.getElementById('image-preview-tag').src = p.image;
+        document.getElementById('image-preview-tag').classList.remove('hidden');
+        document.getElementById('image-placeholder-icon').classList.add('hidden');
+        document.getElementById('remove-img-btn').classList.remove('hidden');
       }
       document.getElementById('prod-instock').checked = p.inStock;
       const container = document.getElementById('variants-container');
       container.innerHTML = '';
-      p.variants.forEach(v => {
-        addVariantRow(v.label, v.price, v.mrp || '');
-      });
+      p.variants.forEach(v => addVariantRow(v.label, v.price, v.mrp || ''));
     }
 
     function saveProduct() {
@@ -1183,37 +1246,24 @@
       const image = document.getElementById('prod-image').value.trim();
       const inStock = document.getElementById('prod-instock').checked;
 
-      if (!name) {
-        alert("Please enter product name");
-        return;
-      }
+      if (!name) return alert("Please enter product name");
+
       const rows = document.querySelectorAll('.variant-row');
       const variants = [];
       rows.forEach(r => {
         const l = r.querySelector('.v-label').value.trim();
         const p = parseFloat(r.querySelector('.v-price').value);
         const m = parseFloat(r.querySelector('.v-mrp').value) || null;
-        if (l && !isNaN(p)) {
-          variants.push({ label: l, price: p, mrp: m });
-        }
+        if (l && !isNaN(p)) variants.push({ label: l, price: p, mrp: m });
       });
 
-      if (variants.length === 0) {
-        alert("Please add at least one weight/quantity variant and price.");
-        return;
-      }
+      if (variants.length === 0) return alert("Please add at least one weight/quantity variant and price.");
 
       if (id) {
         const idx = products.findIndex(x => x.id === id);
-        if (idx !== -1) {
-          products[idx] = { ...products[idx], name, category, image, inStock, variants };
-        }
+        if (idx !== -1) products[idx] = { ...products[idx], name, category, image, inStock, variants };
       } else {
-        const newProduct = {
-          id: 'p_' + Date.now(),
-          name, category, image, inStock, variants
-        };
-        products.push(newProduct);
+        products.push({ id: 'p_' + Date.now(), name, category, image, inStock, variants });
       }
 
       localStorage.setItem('mm_products', JSON.stringify(products));
@@ -1223,185 +1273,40 @@
     }
 
     function promptDeleteProduct(id) {
-      const p = products.find(x => x.id === id);
-      if (!p) return;
-      itemToDelete = id;
-      document.getElementById('delete-prompt-text').innerText = `Remove "${p.name}" and all its weight variants?`;
-      document.getElementById('modal-delete').classList.remove('hidden');
-      document.getElementById('confirm-delete-btn').onclick = executeDeleteProduct;
-    }
-    function closeDeleteModal() {
-      document.getElementById('modal-delete').classList.add('hidden');
-      itemToDelete = null;
-    }
-    function executeDeleteProduct() {
-      if (!itemToDelete) return;
-      products = products.filter(p => p.id !== itemToDelete);
-      localStorage.setItem('mm_products', JSON.stringify(products));
-      renderAdminProducts();
-      renderCatalog();
-      closeDeleteModal();
-    }
-
-    function renderAdminCoupons() {
-      const container = document.getElementById('admin-coupons-list');
-      container.innerHTML = '';
-      coupons.forEach((c, idx) => {
-        const div = document.createElement('div');
-        div.className = "bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex items-center justify-between";
-        div.innerHTML = `
-          <div>
-            <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold text-xs uppercase tracking-wider">${c.code}</span>
-            <p class="text-xs text-gray-700 font-semibold mt-1.5">${c.type === 'flat' ? `Flat ₹${c.val} OFF` : `${c.val}% OFF`}</p>
-            <p class="text-[11px] text-gray-400">Min. order ₹${c.min}</p>
-          </div>
-          <button onclick="deleteCoupon(${idx})" class="text-gray-300 hover:text-red-500 text-xs">
-            <i class="fa-solid fa-trash"></i>
-          </button>
-        `;
-        container.appendChild(div);
-      });
-    }
-
-    function openCouponModal() {
-      document.getElementById('modal-coupon').classList.remove('hidden');
-    }
-    function closeCouponModal() {
-      document.getElementById('modal-coupon').classList.add('hidden');
-    }
-    function saveCoupon() {
-      const code = document.getElementById('coupon-code').value.trim().toUpperCase();
-      const type = document.getElementById('coupon-type').value;
-      const val = parseFloat(document.getElementById('coupon-val').value);
-      const min = parseFloat(document.getElementById('coupon-min').value) || 0;
-      if (!code || isNaN(val)) {
-        alert("Enter coupon code and discount value.");
-        return;
+      if (confirm("Delete this product and its variants?")) {
+        products = products.filter(p => p.id !== id);
+        localStorage.setItem('mm_products', JSON.stringify(products));
+        renderAdminProducts();
+        renderCatalog();
       }
-      coupons.push({ code, type, val, min });
-      localStorage.setItem('mm_coupons', JSON.stringify(coupons));
-      renderAdminCoupons();
-      closeCouponModal();
-    }
-    function deleteCoupon(idx) {
-      coupons.splice(idx, 1);
-      localStorage.setItem('mm_coupons', JSON.stringify(coupons));
-      renderAdminCoupons();
-    }
-
-    function renderAdminOrders() {
-      const container = document.getElementById('admin-orders-container');
-      if (orders.length === 0) {
-        container.innerHTML = `<div class="p-8 text-center text-xs text-gray-400">No orders placed yet.</div>`;
-        return;
-      }
-      container.innerHTML = `
-        <div class="divide-y divide-gray-100">
-          ${orders.map(o => `
-            <div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-              <div>
-                <div class="flex items-center gap-2">
-                  <span class="font-bold text-gray-900">#${o.id}</span>
-                  <span class="text-gray-400 font-medium">${o.date}</span>
-                  <span class="px-2 py-0.5 bg-blue-50 text-blue-700 font-bold rounded text-[10px]">${o.status}</span>
-                </div>
-                <p class="text-gray-700 font-medium mt-1">Customer: ${o.customer} · <span class="text-gray-500">${o.address}</span></p>
-                <p class="text-gray-500 text-[11px] mt-0.5">${o.items.map(i => `${i.name} (${i.variantLabel}) x${i.qty}`).join(', ')}</p>
-              </div>
-              <div class="text-right flex sm:flex-col items-center sm:items-end justify-between">
-                <span class="font-extrabold text-sm text-gray-900">₹${o.total.toFixed(1)}</span>
-                <span class="text-[10px] text-gray-400">${o.items.length} items · Delivery: ${o.deliveryFee ? '₹' + o.deliveryFee : 'FREE'}</span>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      `;
     }
 
     function populateSettingsForm() {
       document.getElementById('setting-store-name').value = storeConfig.name;
       document.getElementById('setting-locality').value = storeConfig.locality;
       document.getElementById('setting-phone').value = storeConfig.phone;
-      
       document.getElementById('setting-free-km').value = storeConfig.freeKm;
       document.getElementById('setting-extra-km-rate').value = storeConfig.extraKmRate;
       document.getElementById('setting-free-delivery-min').value = storeConfig.freeDeliveryMinOrder;
-      updateDeliveryRulePreviewText();
-    }
-
-    function updateDeliveryRulePreviewText() {
-      const fKm = storeConfig.freeKm;
-      const rate = storeConfig.extraKmRate;
-      const minO = storeConfig.freeDeliveryMinOrder;
-      document.getElementById('delivery-rule-preview').innerText = 
-        `Current Rule: Free up to ${fKm} KM, then ₹${rate}/KM. Always free on orders above ₹${minO}.`;
     }
 
     function saveDeliverySettings() {
-      const fKm = parseFloat(document.getElementById('setting-free-km').value);
-      const rate = parseFloat(document.getElementById('setting-extra-km-rate').value);
-      const minO = parseFloat(document.getElementById('setting-free-delivery-min').value);
-
-      if (isNaN(fKm) || isNaN(rate) || isNaN(minO)) {
-        alert("Please enter valid numerical values for KM and amounts.");
-        return;
-      }
-
-      storeConfig.freeKm = fKm;
-      storeConfig.extraKmRate = rate;
-      storeConfig.freeDeliveryMinOrder = minO;
-
+      storeConfig.freeKm = parseFloat(document.getElementById('setting-free-km').value) || 5;
+      storeConfig.extraKmRate = parseFloat(document.getElementById('setting-extra-km-rate').value) || 10;
+      storeConfig.freeDeliveryMinOrder = parseFloat(document.getElementById('setting-free-delivery-min').value) || 499;
       localStorage.setItem('mm_config', JSON.stringify(storeConfig));
       applyStoreBranding();
-      updateDeliveryRulePreviewText();
       updateCartUI();
-      alert("Delivery charges & KM rules updated successfully!");
-    }
-
-    function previewStoreName(val) {
-      if (!val) return;
-      document.getElementById('header-store-name').innerText = val;
-      const initials = val.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase() || 'MM';
-      document.getElementById('header-logo').innerText = initials;
-    }
-    function previewStoreLocality(val) {
-      if (!val) return;
-      document.getElementById('header-locality').innerText = val;
+      alert("Delivery charges updated successfully!");
     }
 
     function saveStoreSettings() {
-      const name = document.getElementById('setting-store-name').value.trim();
-      const locality = document.getElementById('setting-locality').value.trim();
-      const phone = document.getElementById('setting-phone').value.trim();
-      if (!name || !phone) {
-        alert("Store name and mobile number are required.");
-        return;
-      }
-      storeConfig.name = name;
-      storeConfig.locality = locality;
-      storeConfig.phone = phone;
+      storeConfig.name = document.getElementById('setting-store-name').value.trim() || storeConfig.name;
+      storeConfig.locality = document.getElementById('setting-locality').value.trim() || storeConfig.locality;
+      storeConfig.phone = document.getElementById('setting-phone').value.trim() || storeConfig.phone;
       localStorage.setItem('mm_config', JSON.stringify(storeConfig));
       applyStoreBranding();
-      alert("Store details updated successfully!");
-    }
-
-    function changeAdminPassword() {
-      const cur = document.getElementById('setting-current-pwd').value.trim();
-      const nxt = document.getElementById('setting-new-pwd').value.trim();
-      const actualPwd = storeConfig.password || DEFAULT_STORE_CONFIG.password;
-      if (cur !== actualPwd) {
-        alert("Current password is incorrect.");
-        return;
-      }
-      if (!nxt || nxt.length < 4) {
-        alert("New password must be at least 4 characters.");
-        return;
-      }
-      storeConfig.password = nxt;
-      localStorage.setItem('mm_config', JSON.stringify(storeConfig));
-      document.getElementById('setting-current-pwd').value = '';
-      document.getElementById('setting-new-pwd').value = '';
-      alert("Admin password updated successfully!");
+      alert("Business details updated successfully!");
     }
 
     window.addEventListener('DOMContentLoaded', initApp);
