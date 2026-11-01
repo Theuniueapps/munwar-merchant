@@ -26,6 +26,9 @@
       }
       .no-print { display: none !important; }
     }
+    <!-- Firebase SDKs (Compat versions for simple single-file web apps) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   </style>
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased min-h-screen flex flex-col">
@@ -160,11 +163,25 @@
 
     <!-- TAB 2: Products & Variants -->
     <section id="admin-tab-products" class="hidden space-y-6">
-      <div class="flex items-center justify-between">
-        <h3 class="text-base font-bold text-gray-800">Inventory Items (<span id="admin-product-count">0</span>)</h3>
-        <button onclick="openProductModal()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm">
-          <i class="fa-solid fa-plus"></i> Add New Product
-        </button>
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h3 class="text-base font-bold text-gray-800">Inventory Items (<span id="admin-product-count">0</span>)</h3>
+          <p class="text-xs text-gray-500">Manage products, weight variants, or export/import catalog to sync devices</p>
+        </div>
+        <div class="flex items-center flex-wrap gap-2">
+          <!-- Export JSON Button -->
+          <button onclick="exportCatalogJSON()" class="px-3 py-2 bg-white border border-emerald-600 text-emerald-700 hover:bg-emerald-50 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors" title="Download catalog JSON to share">
+            <i class="fa-solid fa-file-export"></i> Export JSON
+          </button>
+          <!-- Import JSON Button -->
+          <button onclick="openImportModal()" class="px-3 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors" title="Import updated catalog from file or text">
+            <i class="fa-solid fa-file-import text-emerald-600"></i> Import JSON
+          </button>
+          <!-- Add Product Button -->
+          <button onclick="openProductModal()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors">
+            <i class="fa-solid fa-plus"></i> Add Product
+          </button>
+        </div>
       </div>
 
       <div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
@@ -450,6 +467,70 @@
     </div>
   </div>
 
+  
+  <!-- Import Catalog JSON Modal -->
+  <div id="modal-import-catalog" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl relative my-8 text-xs">
+      <div class="flex items-center justify-between pb-3 border-b border-gray-100 mb-3">
+        <div>
+          <h3 class="text-base font-bold text-gray-900 flex items-center gap-1.5">
+            <i class="fa-solid fa-file-import text-emerald-600"></i> Import Catalog JSON
+          </h3>
+          <p class="text-[11px] text-gray-500 mt-0.5">Upload a catalog JSON file or paste JSON code directly.</p>
+        </div>
+        <button onclick="closeImportModal()" class="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-600">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <!-- Option 1: File Upload -->
+        <div class="p-3 bg-emerald-50/60 border border-emerald-200 rounded-xl space-y-2">
+          <label class="block font-bold text-emerald-950">Method 1: Upload JSON File</label>
+          <div class="flex items-center gap-2">
+            <input type="file" id="import-json-file" accept=".json,application/json" onchange="handleCatalogFileSelect(event)" class="text-xs file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer">
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 text-gray-400">
+          <div class="flex-grow border-t border-gray-200"></div>
+          <span class="text-[10px] uppercase font-bold tracking-wider">OR</span>
+          <div class="flex-grow border-t border-gray-200"></div>
+        </div>
+
+        <!-- Option 2: Paste JSON Text -->
+        <div class="space-y-1.5">
+          <label class="block font-bold text-gray-700">Method 2: Paste JSON Code</label>
+          <textarea id="import-json-textarea" rows="6" placeholder="Paste the catalog JSON code here (starts with [ or { )..." class="w-full p-2.5 border border-gray-200 rounded-xl font-mono text-[11px] focus:outline-none focus:ring-1 focus:ring-emerald-500"></textarea>
+        </div>
+
+        <!-- Merge vs Replace Option -->
+        <div class="bg-gray-50 p-3 rounded-xl border border-gray-200 space-y-1.5">
+          <label class="block font-bold text-gray-700">Import Mode:</label>
+          <div class="flex items-center gap-4 text-gray-700">
+            <label class="inline-flex items-center gap-1.5 cursor-pointer">
+              <input type="radio" name="import-mode" value="replace" checked class="text-emerald-600 focus:ring-emerald-500">
+              <span class="font-medium">Replace existing catalog (Recommended)</span>
+            </label>
+            <label class="inline-flex items-center gap-1.5 cursor-pointer">
+              <input type="radio" name="import-mode" value="merge" class="text-emerald-600 focus:ring-emerald-500">
+              <span class="font-medium">Merge / Append new items</span>
+            </label>
+          </div>
+        </div>
+
+        <div id="import-status-msg" class="hidden text-xs font-semibold p-2.5 rounded-lg"></div>
+
+        <div class="flex justify-end gap-2 pt-2 border-t border-gray-100">
+          <button onclick="closeImportModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold">Cancel</button>
+          <button onclick="executeImportJSON()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-sm">
+            <i class="fa-solid fa-check mr-1"></i> Apply & Import Catalog
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Admin Login Modal -->
   <div id="modal-admin-login" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl relative">
@@ -544,6 +625,35 @@
 
   <!-- JavaScript Application Logic -->
   <script>
+    // =========================================================================
+    // 1. FIREBASE CONFIGURATION (PASTE YOUR FIREBASE KEYS HERE)
+    // =========================================================================
+    const firebaseConfig = {
+      apiKey: "AIzaSyDXpGqjjc4FtkSYyUBfzUNJuwZOZiOyX_k",
+      authDomain: "munwar-merchant.firebaseapp.com",
+      projectId: "munwar-merchant",
+      storageBucket: "munwar-merchant.firebasestorage.app",
+      messagingSenderId: "13716284910",
+      appId: "1:13716284910:web:a041887d9ec4b5d5a8daff"
+    };
+
+    // Auto-detect if user has replaced placeholder keys
+    let db = null;
+    let isFirebaseConfigured = false;
+
+    if (firebaseConfig.apiKey && !firebaseConfig.apiKey.includes("PASTE_")) {
+      try {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+        isFirebaseConfigured = true;
+        console.log("Firebase Firestore initialized successfully.");
+      } catch (err) {
+        console.error("Firebase init failed:", err);
+      }
+    } else {
+      console.warn("Firebase running in offline/localStorage mode. Add your Firebase keys to enable live multi-device syncing.");
+    }
+
     const DEFAULT_STORE_CONFIG = {
       name: "Munwar Merchant",
       locality: "Phool Bagh, Chandrayangutta, Hyderabad",
@@ -644,13 +754,48 @@
     let currentCustomerDistance = 2.0;
     let activeReceiptOrder = null;
 
+
+    // =========================================================================
+    // 2. REAL-TIME CLOUD SYNC (FIRESTORE)
+    // =========================================================================
+    function syncProductsFromCloud() {
+      if (!isFirebaseConfigured || !db) {
+        // Fallback to local storage if Firebase is not yet configured
+        renderCatalog();
+        renderAdminProducts();
+        return;
+      }
+
+      // Realtime listener: fires immediately on page load and whenever any device saves a product
+      db.collection("catalog").doc("inventory").onSnapshot((doc) => {
+        if (doc.exists && doc.data() && Array.isArray(doc.data().items)) {
+          products = doc.data().items;
+          localStorage.setItem('mm_products', JSON.stringify(products));
+          renderCatalog();
+          renderAdminProducts();
+          console.log(`Cloud sync: Loaded ${products.length} products from Firestore.`);
+        } else {
+          // If Firestore is empty on the first run, automatically seed it with INITIAL_PRODUCTS
+          console.log("Seeding initial catalog to Firestore...");
+          db.collection("catalog").doc("inventory").set({
+            items: products,
+            lastUpdated: new Date().toISOString()
+          });
+        }
+      }, (error) => {
+        console.error("Firestore sync error:", error);
+        renderCatalog();
+        renderAdminProducts();
+      });
+    }
+
     function initApp() {
       applyStoreBranding();
-      renderCatalog();
-      renderAdminProducts();
+      syncProductsFromCloud(); // Real-time sync across all phones & devices
       renderAdminOrders();
       populateSettingsForm();
     }
+
 
     function applyStoreBranding() {
       document.title = `${storeConfig.name} — Fresh Local Groceries`;
@@ -1266,10 +1411,26 @@
         products.push({ id: 'p_' + Date.now(), name, category, image, inStock, variants });
       }
 
+      // Always save locally
       localStorage.setItem('mm_products', JSON.stringify(products));
       renderAdminProducts();
       renderCatalog();
       closeProductModal();
+
+      // If Firebase is configured, sync to cloud so all customer phones update instantly
+      if (isFirebaseConfigured && db) {
+        db.collection("catalog").doc("inventory").set({
+          items: products,
+          lastUpdated: new Date().toISOString()
+        }).then(() => {
+          alert("✅ Product saved & synced live to cloud for all customers!");
+        }).catch((err) => {
+          console.error("Firestore write error:", err);
+          alert("Saved locally, but cloud sync had an error: " + err.message);
+        });
+      } else {
+        alert("✅ Product saved locally on this device! (Add Firebase keys in index.html to sync to all customers' phones).");
+      }
     }
 
     function promptDeleteProduct(id) {
@@ -1278,6 +1439,13 @@
         localStorage.setItem('mm_products', JSON.stringify(products));
         renderAdminProducts();
         renderCatalog();
+
+        if (isFirebaseConfigured && db) {
+          db.collection("catalog").doc("inventory").set({
+            items: products,
+            lastUpdated: new Date().toISOString()
+          }).catch(err => console.error("Firestore delete sync error:", err));
+        }
       }
     }
 
@@ -1307,6 +1475,141 @@
       localStorage.setItem('mm_config', JSON.stringify(storeConfig));
       applyStoreBranding();
       alert("Business details updated successfully!");
+    }
+
+    
+    // ==================== EXPORT & IMPORT JSON CATALOG ====================
+    function exportCatalogJSON() {
+      if (!products || products.length === 0) {
+        alert("There are no products in the catalog to export.");
+        return;
+      }
+
+      const catalogData = {
+        store: storeConfig.name,
+        exportedAt: new Date().toISOString(),
+        productsCount: products.length,
+        products: products
+      };
+
+      const jsonStr = JSON.stringify(catalogData, null, 2);
+      const blob = new Blob([jsonStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const fileName = `munwar_catalog_${new Date().toISOString().slice(0, 10)}.json`;
+
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.href = url;
+      downloadAnchor.download = fileName;
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      document.body.removeChild(downloadAnchor);
+      URL.revokeObjectURL(url);
+
+      alert(`✅ Catalog exported successfully! (${products.length} products saved to ${fileName}).\n\nYour client can now send this file to you via WhatsApp or Email.`);
+    }
+
+    function openImportModal() {
+      document.getElementById('import-json-file').value = '';
+      document.getElementById('import-json-textarea').value = '';
+      const statusDiv = document.getElementById('import-status-msg');
+      statusDiv.className = 'hidden';
+      statusDiv.innerText = '';
+      document.getElementById('modal-import-catalog').classList.remove('hidden');
+    }
+
+    function closeImportModal() {
+      document.getElementById('modal-import-catalog').classList.add('hidden');
+    }
+
+    function handleCatalogFileSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('import-json-textarea').value = e.target.result;
+        const statusDiv = document.getElementById('import-status-msg');
+        statusDiv.className = 'text-xs font-semibold p-2.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200';
+        statusDiv.innerText = `📄 File "${file.name}" loaded into text box. Click "Apply & Import Catalog" below to finish.`;
+        statusDiv.classList.remove('hidden');
+      };
+      reader.readAsText(file);
+    }
+
+    function executeImportJSON() {
+      const rawText = document.getElementById('import-json-textarea').value.trim();
+      const statusDiv = document.getElementById('import-status-msg');
+      statusDiv.classList.remove('hidden');
+
+      if (!rawText) {
+        statusDiv.className = 'text-xs font-semibold p-2.5 rounded-lg bg-red-50 text-red-700 border border-red-200';
+        statusDiv.innerText = "Please select a JSON file or paste JSON code first.";
+        return;
+      }
+
+      try {
+        const parsed = JSON.parse(rawText);
+        let importedProducts = [];
+
+        // Check if format is { products: [...] } or direct array [...]
+        if (Array.isArray(parsed)) {
+          importedProducts = parsed;
+        } else if (parsed && Array.isArray(parsed.products)) {
+          importedProducts = parsed.products;
+        } else {
+          throw new Error("Invalid format. The JSON must contain a list of products.");
+        }
+
+        if (importedProducts.length === 0) {
+          throw new Error("The imported JSON contains 0 products.");
+        }
+
+        // Verify items have basic properties
+        const isValid = importedProducts.every(p => p.name && Array.isArray(p.variants));
+        if (!isValid) {
+          throw new Error("Some products in the JSON are missing required fields (name, variants).");
+        }
+
+        const mode = document.querySelector('input[name="import-mode"]:checked')?.value || 'replace';
+
+        if (mode === 'replace') {
+          products = importedProducts;
+        } else {
+          // Merge mode: replace items with same id, append others
+          importedProducts.forEach(newP => {
+            const existingIdx = products.findIndex(p => p.id === newP.id || (p.name && newP.name && p.name.toLowerCase() === newP.name.toLowerCase()));
+            if (existingIdx !== -1) {
+              products[existingIdx] = newP;
+            } else {
+              products.push(newP);
+            }
+          });
+        }
+
+        localStorage.setItem('mm_products', JSON.stringify(products));
+        renderAdminProducts();
+        renderCatalog();
+
+        // Push imported catalog to Firestore if configured
+        if (isFirebaseConfigured && db) {
+          db.collection("catalog").doc("inventory").set({
+            items: products,
+            lastUpdated: new Date().toISOString()
+          }).catch(err => console.error("Firestore import sync error:", err));
+        }
+
+        statusDiv.className = 'text-xs font-semibold p-2.5 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-200';
+        statusDiv.innerText = `🎉 Successfully imported ${importedProducts.length} products! Total in catalog now: ${products.length}.`;
+
+        setTimeout(() => {
+          closeImportModal();
+          alert(`Catalog updated! Total products: ${products.length}.`);
+        }, 800);
+
+      } catch (err) {
+        statusDiv.className = 'text-xs font-semibold p-2.5 rounded-lg bg-red-50 text-red-700 border border-red-200';
+        statusDiv.innerText = `❌ Import error: ${err.message}`;
+      }
     }
 
     window.addEventListener('DOMContentLoaded', initApp);
