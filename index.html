@@ -25,11 +25,11 @@
         background: white !important;
       }
       .no-print { display: none !important; }
-   }
-</style>
-<!-- Firebase SDKs (Compat versions for simple single-file web apps) -->
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    }
+  </style>
+  <!-- Firebase SDKs (Compat versions for simple single-file web apps) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased min-h-screen flex flex-col">
 
@@ -760,28 +760,39 @@
     // =========================================================================
     function syncProductsFromCloud() {
       if (!isFirebaseConfigured || !db) {
-        // Fallback to local storage if Firebase is not yet configured
         renderCatalog();
         renderAdminProducts();
         return;
       }
 
-      // Realtime listener: fires immediately on page load and whenever any device saves a product
-      db.collection("catalog").doc("inventory").onSnapshot((doc) => {
-        if (doc.exists && doc.data() && Array.isArray(doc.data().items)) {
-          products = doc.data().items;
-          localStorage.setItem('mm_products', JSON.stringify(products));
-          renderCatalog();
-          renderAdminProducts();
-          console.log(`Cloud sync: Loaded ${products.length} products from Firestore.`);
-        } else {
-          // If Firestore is empty on the first run, automatically seed it with INITIAL_PRODUCTS
-          console.log("Seeding initial catalog to Firestore...");
-          db.collection("catalog").doc("inventory").set({
-            items: products,
-            lastUpdated: new Date().toISOString()
+      // Realtime listener on the catalog collection (each product is an individual document)
+      db.collection("catalog").onSnapshot((snapshot) => {
+        if (!snapshot.empty) {
+          const cloudItems = [];
+          snapshot.forEach(doc => {
+            if (doc.id === 'inventory') return; // Skip legacy single doc
+            const data = doc.data();
+            if (data && data.name) cloudItems.push(data);
           });
+
+          if (cloudItems.length > 0) {
+            products = cloudItems;
+            localStorage.setItem('mm_products', JSON.stringify(products));
+            renderCatalog();
+            renderAdminProducts();
+            console.log(`Cloud sync: Loaded ${products.length} products from Firestore collection.`);
+            return;
+          }
         }
+
+        // If collection is empty, seed initial products as individual documents
+        console.log("Seeding products as individual documents to Firestore...");
+        const batch = db.batch();
+        products.forEach(p => {
+          const ref = db.collection("catalog").doc(p.id);
+          batch.set(ref, p);
+        });
+        batch.commit().catch(e => console.error("Seeding error:", e));
       }, (error) => {
         console.error("Firestore sync error:", error);
         renderCatalog();
@@ -1293,7 +1304,7 @@
         const rawImg = new Image();
         rawImg.onload = function() {
           const canvas = document.createElement('canvas');
-          const maxDim = 600;
+          const maxDim = 400; // Optimized thumbnail size for fast mobile loading
           let width = rawImg.width;
           let height = rawImg.height;
 
@@ -1314,7 +1325,7 @@
           const ctx = canvas.getContext('2d');
           ctx.drawImage(rawImg, 0, 0, width, height);
 
-          const optimizedData = canvas.toDataURL('image/jpeg', 0.85);
+          const optimizedData = canvas.toDataURL('image/jpeg', 0.70); // Lightweight image compression (~20KB)
           document.getElementById('image-preview-tag').src = optimizedData;
           document.getElementById('image-preview-tag').classList.remove('hidden');
           document.getElementById('image-placeholder-icon').classList.add('hidden');
@@ -1417,12 +1428,10 @@
       renderCatalog();
       closeProductModal();
 
-      // If Firebase is configured, sync to cloud so all customer phones update instantly
+      // If Firebase is configured, sync to cloud as an individual document (no 1MB limit!)
       if (isFirebaseConfigured && db) {
-        db.collection("catalog").doc("inventory").set({
-          items: products,
-          lastUpdated: new Date().toISOString()
-        }).then(() => {
+        const savedItem = id ? products.find(x => x.id === id) : products[products.length - 1];
+        db.collection("catalog").doc(savedItem.id).set(savedItem).then(() => {
           alert("✅ Product saved & synced live to cloud for all customers!");
         }).catch((err) => {
           console.error("Firestore write error:", err);
@@ -1441,10 +1450,7 @@
         renderCatalog();
 
         if (isFirebaseConfigured && db) {
-          db.collection("catalog").doc("inventory").set({
-            items: products,
-            lastUpdated: new Date().toISOString()
-          }).catch(err => console.error("Firestore delete sync error:", err));
+          db.collection("catalog").doc(id).delete().catch(err => console.error("Firestore delete sync error:", err));
         }
       }
     }
@@ -1592,10 +1598,12 @@
 
         // Push imported catalog to Firestore if configured
         if (isFirebaseConfigured && db) {
-          db.collection("catalog").doc("inventory").set({
-            items: products,
-            lastUpdated: new Date().toISOString()
-          }).catch(err => console.error("Firestore import sync error:", err));
+          const batch = db.batch();
+          products.forEach(p => {
+            const ref = db.collection("catalog").doc(p.id);
+            batch.set(ref, p);
+          });
+          batch.commit().catch(err => console.error("Firestore import batch sync error:", err));
         }
 
         statusDiv.className = 'text-xs font-semibold p-2.5 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-200';
